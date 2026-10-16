@@ -27,7 +27,9 @@ The tools refuse days before today in the athlete's time zone. Write the date as
 
 ### 2. Create
 
-Call `create_cycling_workout` or `create_strength_workout` once. Every reply is JSON with `status`, `saved` and `next`. `saved` is `yes`, `no` or `unknown`. Do what `next` says.
+Call `create_cycling_workout` or `create_strength_workout` once. When the arguments match the tool's input schema, the reply is JSON with `status`, `saved` and `next`. `saved` is `yes`, `no` or `unknown`. Do what `next` says.
+
+When the arguments break the input schema, the reply is a plain-text error that names the field, not JSON. Nothing was saved. Fix that field and call again.
 
 ### 3. Handle the reply
 

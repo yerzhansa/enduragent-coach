@@ -10,7 +10,7 @@ This skill covers gym sessions for cyclists. The save and read-back protocol is 
 ## Protocol in short
 
 1. Confirm the calendar day with the athlete in their terms, such as "tomorrow, Thursday 18 March", before you write.
-2. Call `create_strength_workout` once and do what the reply's `next` says.
+2. Call `create_strength_workout` once and do what the reply's `next` says. A plain-text error instead of JSON means the arguments break the input schema. It names the field. Fix it and call again.
 3. On `duplicate_found`, ask the athlete. Only after a yes, call again with `confirmDuplicate: true`.
 4. After `created`, call `get_workout` with the `eventId`. Report a one-line summary, then the stored description in a code block. Strength workouts have no power chart, so skip the chart line.
 5. Never say "saved" without that read-back.
