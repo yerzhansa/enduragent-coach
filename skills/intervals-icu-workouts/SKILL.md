@@ -134,7 +134,7 @@ A set repeats one interval and one recovery a fixed number of times:
 
 - Every step needs a power target, except `freeride` and `rest`.
 - A ramp needs `low` and `high`. On a ramp, `low` is the start and `high` is the end, so a ramp from 60% down to 40% has `low` 60 and `high` 40.
-- Any other range needs `low` at or below `high`.
+- Any other range needs `low` at or below `high`. A cooldown that eases down is a `ramp`, and it shows under "Main set".
 - Zone values are whole numbers 1 to 7.
 - Percent of FTP goes up to 200. Watts go up to 1500.
 - A cadence range needs both ends.

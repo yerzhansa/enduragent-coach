@@ -43580,11 +43580,16 @@ function boundIssues(power, path) {
   check3(power.high, "high");
   return issues;
 }
-function parsePower(power, isRamp, path) {
+function invertedRangeIssue(type, low, high, path) {
+  const issue2 = `${path}: power.low (${low}) > power.high (${high})`;
+  return type === "cooldown" ? `${issue2}. A cooldown range is one steady target, so for a ramp down from ${low} to ${high} use type 'ramp' with low ${low} and high ${high}` : issue2;
+}
+function parsePower(power, type, path) {
   const issues = boundIssues(power, path);
+  const isRamp = type === "ramp";
   const { kind, value, low, high } = power;
   if (low !== void 0 && high !== void 0) {
-    if (low > high && !isRamp) issues.push(`${path}: power.low (${low}) > power.high (${high})`);
+    if (low > high && !isRamp) issues.push(invertedRangeIssue(type, low, high, path));
     if (kind !== "zone") return { value: { shape: "range", kind, low, high }, issues };
     const lowZone = toZone(low, `${path}.power.low`, issues);
     const highZone = toZone(high, `${path}.power.high`, issues);
@@ -43630,7 +43635,7 @@ function parseSimpleStep(step, path) {
     if (!STEPS_WITHOUT_POWER.has(step.type))
       issues.push(`${path}: ${step.type} step requires a power target`);
   } else {
-    const parsed = parsePower(step.power, step.type === "ramp", path);
+    const parsed = parsePower(step.power, step.type, path);
     issues.push(...parsed.issues);
     power = parsed.value;
   }
