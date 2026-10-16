@@ -312,7 +312,7 @@ function formatStepLine(step: ParsedSimpleStep): string {
   if (step.power !== undefined) parts.push(formatPower(step.power, step.type === "ramp"));
   if (step.cadence !== undefined) parts.push(formatCadence(step.cadence));
   const body = parts.join(" ");
-  return step.label === undefined || step.label === "" ? `- ${body}` : `- ${body} ${step.label}`;
+  return step.label === undefined || step.label === "" ? `- ${body}` : `- ${step.label} ${body}`;
 }
 
 function sectionLabel(step: ParsedStep): string {

@@ -58,7 +58,7 @@ describe("formatCyclingSteps description", () => {
       },
     ]);
     expect(description).toBe(
-      "Warmup\n- 15m 50-65%\n\nMain set 3x\n- 15m 88-94% 85-95rpm Sweet spot\n- 4m 50%\n\nCooldown\n- 10m 50%",
+      "Warmup\n- 15m 50-65%\n\nMain set 3x\n- Sweet spot 15m 88-94% 85-95rpm\n- 4m 50%\n\nCooldown\n- 10m 50%",
     );
   });
 
@@ -210,7 +210,7 @@ describe("formatCyclingSteps description", () => {
     const { description } = formatted([
       { type: "freeride", duration: { value: 60, unit: "minutes" }, label: "Keep it easy" },
     ]);
-    expect(description).toBe("Main set\n- 60m freeride Keep it easy");
+    expect(description).toBe("Main set\n- Keep it easy 60m freeride");
   });
 
   it("keeps a freeride power target and cadence after the freeride keyword", () => {
