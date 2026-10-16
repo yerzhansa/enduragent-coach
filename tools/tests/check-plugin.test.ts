@@ -136,14 +136,14 @@ describe("checkPlugin", () => {
     ).toHaveLength(4);
   });
 
-  it("requires skill names to equal folders, skills to mention exactly the server's tools and known codes, and refusal tables to list real refusal codes including invalid_input", () => {
+  it("requires skill names to equal folders, skills to mention exactly the server's tools and known codes, and code-headed refusal tables to list real refusal codes including invalid_input", () => {
     expect(
       messages({
         ...valid,
         skills: [
           skill(
             "strength-workouts",
-            "Call create_strength_workout or intervals_create_workout. On `quota_exceeded` stop.\n\n| code | What to do |\n| --- | --- |\n| `created` | Read it back. |",
+            "Call create_strength_workout or intervals_create_workout. On `quota_exceeded` stop.\n\n| code | What to do |\n| --- | --- |\n| `created` | Read it back. |\n\n| field | Meaning |\n| --- | --- |\n| `durationMinutes` | Whole minutes. |",
             "strength",
           ),
         ],

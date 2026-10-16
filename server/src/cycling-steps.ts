@@ -71,8 +71,8 @@ export const cyclingStepsField = z
       "Every other step refuses low above high, so a cooldown that eases down is a ramp. " +
       "Every step except freeride and rest needs a power target. A label is a short cue in plain words, " +
       "with no digits, none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, " +
-      "maxeffort, hidepower, intensity=, power=, rpm, w, watts, km, mi, mtr, press lap), and no two " +
-      "letters followed by / (such as en/ or on/), which intervals.icu reads as a language prefix. " +
+      "maxeffort, hidepower, intensity=, power=, rpm, w, watts, km, mi, mtr, press lap), and no two-letter " +
+      "word followed by / (such as en/ or on/), which intervals.icu reads as a language prefix. " +
       "Leave out a label rather than send a blank one.",
   );
 

@@ -217,13 +217,19 @@ function schemaVocabulary(): ReadonlySet<string> {
 
 const TOOL_TOKEN = /\b(?:create_[a-z0-9]+_workout|get_[a-z0-9]+)\b/g;
 const SNAKE_CODE = /`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`/g;
-const REFUSAL_ROW_CODES = /^\| *(`[^|]*?) *\|/gm;
+const TABLE = /^(?:\|.*(?:\r?\n|$))+/gm;
+const REFUSAL_TABLE_HEADER = /^\| *code *\|/;
+const FIRST_CELL = /^\| *([^|]*?) *\|/;
 const BACKTICKED = /`([^`]+)`/g;
 
 function refusalTableCodes(body: string): readonly string[] {
-  return [...body.matchAll(REFUSAL_ROW_CODES)].flatMap((row) =>
-    [...(row[1] ?? "").matchAll(BACKTICKED)].map((code) => code[1] ?? ""),
-  );
+  return [...body.matchAll(TABLE)]
+    .map((table) => table[0].split(/\r?\n/))
+    .filter(([header]) => REFUSAL_TABLE_HEADER.test(header ?? ""))
+    .flatMap((rows) => rows.slice(2))
+    .flatMap((row) =>
+      [...(FIRST_CELL.exec(row)?.[1] ?? "").matchAll(BACKTICKED)].map((code) => code[1] ?? ""),
+    );
 }
 
 function checkSkills(skills: readonly SkillFile[]): Finding[] {
