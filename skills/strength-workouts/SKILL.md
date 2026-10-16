@@ -17,11 +17,11 @@ This skill covers gym sessions for cyclists. The save and read-back protocol is 
 
 On `refused`, nothing was saved. Do what `next` says. These codes come from your own arguments. The `intervals-icu-workouts` skill lists the others.
 
-| code                | What to do                                             |
-| ------------------- | ------------------------------------------------------ |
-| `invalid_input`     | Fix the field at the path in `details` and call again. |
-| `invalid_date`      | Use a real date written `YYYY-MM-DD`.                  |
-| `past_date_refused` | Pick today or a later day with the athlete.            |
+| code                | What to do                                  |
+| ------------------- | ------------------------------------------- |
+| `invalid_input`     | Fix what `details` lists and call again.    |
+| `invalid_date`      | Use a real date written `YYYY-MM-DD`.       |
+| `past_date_refused` | Pick today or a later day with the athlete. |
 
 ## Input
 
