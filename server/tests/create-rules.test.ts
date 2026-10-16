@@ -300,7 +300,7 @@ describe.each(WORKOUT_KINDS)("$name", (kind) => {
     expect(JSON.stringify(unknown.reply)).not.toContain("10.0.0.7");
   });
 
-  it("rejects an unknown argument and a name with a line break or line separator through the SDK's input validation", async () => {
+  it("refuses an unknown argument, a name with a line break or line separator, and a bad date as invalid_input", async () => {
     const intervals = fakeIntervals();
     const session = await openSession({ intervals });
     const unknownKey = await session.call(kind.name, { ...args(LATER), indoor: true });
@@ -309,7 +309,7 @@ describe.each(WORKOUT_KINDS)("$name", (kind) => {
     const badDate = await session.call(kind.name, { ...args(LATER), date: "2026/10/21" });
     for (const call of [unknownKey, lineBreak, lineSeparator, badDate]) {
       expect(call.isError).toBe(true);
-      expect(call.reply["sdkMessage"]).toContain("Input validation error");
+      expect(call.reply).toMatchObject({ status: "refused", saved: "no", code: "invalid_input" });
     }
     expect(intervals.requests).toEqual([]);
   });

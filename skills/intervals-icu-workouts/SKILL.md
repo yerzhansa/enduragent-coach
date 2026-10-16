@@ -27,9 +27,7 @@ The tools refuse days before today in the athlete's time zone. Write the date as
 
 ### 2. Create
 
-Call `create_cycling_workout` or `create_strength_workout` once. When the arguments match the tool's input schema, the reply is JSON with `status`, `saved` and `next`. `saved` is `yes`, `no` or `unknown`. Do what `next` says.
-
-When the arguments break the input schema, the reply is a plain-text error that names the field, not JSON. Nothing was saved. Fix that field and call again.
+Call `create_cycling_workout` or `create_strength_workout` once. Every reply is JSON with `status`, `saved` and `next`. `saved` is `yes`, `no` or `unknown`. Do what `next` says.
 
 ### 3. Handle the reply
 
@@ -88,7 +86,7 @@ Example report:
 
 If `chartWillRender` is false for a cycling workout, say so plainly. intervals.icu stored the text but did not turn it into steps, so the head unit may show it as a plain note. Suggest the athlete opens it in intervals.icu.
 
-Never say "saved" or "added" without this read-back. A failed `get_workout` says nothing about whether the workout is on the calendar. When the arguments break the input schema, the reply is a plain-text error that names the field, not JSON. Fix that field and call again. Otherwise follow the reply's `next`. If it still fails, say that intervals.icu accepted the workout but reading it back failed, give the reason, and ask the athlete to check the calendar.
+Never say "saved" or "added" without this read-back. A failed `get_workout` says nothing about whether the workout is on the calendar. Follow its `next`. If it still fails, say that intervals.icu accepted the workout but reading it back failed, give the reason, and ask the athlete to check the calendar.
 
 ## Writing a cycling workout
 

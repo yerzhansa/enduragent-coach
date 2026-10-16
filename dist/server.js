@@ -43787,7 +43787,7 @@ function createCoachServer(options) {
       {
         title: tool.title,
         description: tool.description,
-        inputSchema: tool.inputSchema,
+        inputSchema: checkedByTheTool(tool.inputSchema),
         annotations: {
           readOnlyHint: tool.readOnly,
           destructiveHint: false,
@@ -43799,6 +43799,9 @@ function createCoachServer(options) {
     );
   }
   return server;
+}
+function checkedByTheTool(schema) {
+  return { "~standard": { ...schema["~standard"], validate: (value) => ({ value }) } };
 }
 function toCallToolResult(reply) {
   return {

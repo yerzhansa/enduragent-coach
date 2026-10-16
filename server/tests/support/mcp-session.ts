@@ -56,15 +56,8 @@ export async function openSession(options: SessionOptions): Promise<McpSession> 
     listTools: async () => (await client.listTools()).tools,
     call: async (name, args) => {
       const result = callResultSchema.parse(await client.callTool({ name, arguments: args }));
-      return { isError: result.isError === true, reply: parseReply(result.content[0].text) };
+      const reply = replySchema.parse(JSON.parse(result.content[0].text));
+      return { isError: result.isError === true, reply };
     },
   };
-}
-
-function parseReply(text: string): Readonly<Record<string, unknown>> {
-  try {
-    return replySchema.parse(JSON.parse(text));
-  } catch {
-    return { sdkMessage: text };
-  }
 }
