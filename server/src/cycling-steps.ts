@@ -68,6 +68,7 @@ export const cyclingStepsField = z
       "{type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: " +
       "{kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. A ramp needs low and high. " +
       "On a ramp, low is the start and high is the end, so a ramp down has low above high. " +
+      "Every other step refuses low above high, so a cooldown that eases down is a ramp. " +
       "Every step except freeride and rest needs a power target. A label is a short cue in plain words, " +
       "with no digits and none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, " +
       "rpm, w, watts, km, mi, mtr, press lap).",
@@ -110,6 +111,8 @@ type ParsedPower =
     }
   | { readonly shape: "zone"; readonly zone: Zone }
   | { readonly shape: "zone-range"; readonly low: Zone; readonly high: Zone };
+
+type RangePower = Extract<ParsedPower, { readonly shape: "range" | "zone-range" }>;
 
 type ParsedCadence =
   | { readonly shape: "single"; readonly rpm: number }
@@ -157,10 +160,40 @@ function boundIssues(power: PowerTarget, path: string): string[] {
   return issues;
 }
 
-function invertedRangeIssue(type: StepType, low: number, high: number, path: string): string {
+function parseRange(
+  kind: PowerTarget["kind"],
+  low: number,
+  high: number,
+  path: string,
+  issues: string[],
+): RangePower | undefined {
+  if (kind !== "zone") return { shape: "range", kind, low, high };
+  const lowZone = toZone(low, `${path}.power.low`, issues);
+  const highZone = toZone(high, `${path}.power.high`, issues);
+  return lowZone === undefined || highZone === undefined
+    ? undefined
+    : { shape: "zone-range", low: lowZone, high: highZone };
+}
+
+function rampDownHint(range: RangePower): string {
+  const useRamp = `use type 'ramp' with low ${range.low} and high ${range.high}`;
+  if (range.shape === "zone-range") {
+    return `from Z${range.low} to Z${range.high} ${useRamp}. A zone ramp is written as each zone's midpoint percent of FTP, so this one reads back as ${formatPower(range, true)}`;
+  }
+  const unit = range.kind === "percent_ftp" ? "% FTP" : "w";
+  return `from ${range.low}${unit} to ${range.high}${unit} ${useRamp}`;
+}
+
+function invertedRangeIssue(
+  type: StepType,
+  low: number,
+  high: number,
+  range: RangePower | undefined,
+  path: string,
+): string {
   const issue = `${path}: power.low (${low}) > power.high (${high})`;
-  return type === "cooldown"
-    ? `${issue}. A cooldown range is one steady target, so for a ramp down from ${low} to ${high} use type 'ramp' with low ${low} and high ${high}`
+  return type === "cooldown" && range !== undefined
+    ? `${issue}. A cooldown range is one steady target, so for a ramp down ${rampDownHint(range)}`
     : issue;
 }
 
@@ -173,17 +206,9 @@ function parsePower(
   const isRamp = type === "ramp";
   const { kind, value, low, high } = power;
   if (low !== undefined && high !== undefined) {
-    if (low > high && !isRamp) issues.push(invertedRangeIssue(type, low, high, path));
-    if (kind !== "zone") return { value: { shape: "range", kind, low, high }, issues };
-    const lowZone = toZone(low, `${path}.power.low`, issues);
-    const highZone = toZone(high, `${path}.power.high`, issues);
-    return {
-      value:
-        lowZone === undefined || highZone === undefined
-          ? undefined
-          : { shape: "zone-range", low: lowZone, high: highZone },
-      issues,
-    };
+    const range = parseRange(kind, low, high, path, issues);
+    if (low > high && !isRamp) issues.push(invertedRangeIssue(type, low, high, range, path));
+    return { value: range, issues };
   }
   if (isRamp)
     return {

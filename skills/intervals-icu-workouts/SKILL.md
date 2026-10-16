@@ -148,7 +148,7 @@ A broken rule returns `invalid_workout` with every problem listed in `details`. 
 - Prefer `percent_ftp`. The head unit turns a percent into watts from the athlete's FTP with no guesswork.
 - A `zone` target resolves against the zone bands the athlete set in intervals.icu. If their bands differ from the 7-zone model, `Z4` can land one band off. Use zones only when the athlete asks for them.
 - Sweet spot is a named range, not a numbered zone. Write it as `percent_ftp` 88 to 94.
-- A ramp with zone bounds is written as the percent centres of those zones, so the chart still renders. Use `percent_ftp` bounds when exact endpoints matter.
+- A ramp with zone bounds is written as each zone's midpoint percent of FTP, so the chart still renders. The read-back shows that percent ramp, not the zones, so say so when you report it. Use `percent_ftp` bounds when exact endpoints matter.
 - Use `watts` only when the athlete gives watts.
 - The plugin writes power targets only. It has no heart rate targets.
 

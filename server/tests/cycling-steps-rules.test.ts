@@ -80,17 +80,46 @@ describe("formatCyclingSteps rules", () => {
     ).toBe("steps[0]: power.low (5) > power.high (4)");
   });
 
-  it("points a cooldown with low above high at a ramp instead of a swapped range", () => {
+  it.each([
+    {
+      power: { kind: "percent_ftp", low: 60, high: 40 },
+      reply:
+        "steps[0]: power.low (60) > power.high (40). A cooldown range is one steady target, so for a ramp down from 60% FTP to 40% FTP use type 'ramp' with low 60 and high 40",
+    },
+    {
+      power: { kind: "watts", low: 200, high: 150 },
+      reply:
+        "steps[0]: power.low (200) > power.high (150). A cooldown range is one steady target, so for a ramp down from 200w to 150w use type 'ramp' with low 200 and high 150",
+    },
+    {
+      power: { kind: "zone", low: 3, high: 2 },
+      reply:
+        "steps[0]: power.low (3) > power.high (2). A cooldown range is one steady target, so for a ramp down from Z3 to Z2 use type 'ramp' with low 3 and high 2. A zone ramp is written as each zone's midpoint percent of FTP, so this one reads back as ramp 83-65%",
+    },
+  ] as const)(
+    "points a $power.kind cooldown with low above high at a ramp, in its unit",
+    ({ power, reply }) => {
+      expect(issues([{ type: "cooldown", duration: minutes(10), power }])).toBe(reply);
+    },
+  );
+
+  it("names the read-back that the suggested zone ramp writes", () => {
+    const power = { kind: "zone", low: 3, high: 2 } as const;
+    const hint = issues([{ type: "cooldown", duration: minutes(10), power }]);
+    const readBack = /reads back as (.+)$/.exec(hint)?.[1];
+    expect(readBack).toBeDefined();
+    expect(formatted([{ type: "ramp", duration: minutes(10), power }]).description).toBe(
+      `Main set\n- 10m ${readBack}`,
+    );
+  });
+
+  it("gives a cooldown with an out-of-range zone the plain inverted-range error", () => {
     expect(
       issues([
-        {
-          type: "cooldown",
-          duration: minutes(10),
-          power: { kind: "percent_ftp", low: 60, high: 40 },
-        },
+        { type: "cooldown", duration: minutes(10), power: { kind: "zone", low: 9, high: 2 } },
       ]),
     ).toBe(
-      "steps[0]: power.low (60) > power.high (40). A cooldown range is one steady target, so for a ramp down from 60 to 40 use type 'ramp' with low 60 and high 40",
+      "steps[0].power.low: zone must be an integer 1-7, got 9; steps[0]: power.low (9) > power.high (2)",
     );
   });
 
