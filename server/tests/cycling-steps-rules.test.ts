@@ -206,9 +206,12 @@ describe("step labels", () => {
     "all-out",
     "Shred the climb",
     "Stay seated",
-  ])("writes the plain label %j unchanged", (label) => {
-    expect(formatted([steady(label)]).description).toBe(`Main set\n- 2m 80% ${label}`);
-  });
+  ])(
+    "writes the plain label %j before the duration, where intervals.icu reads the cue",
+    (label) => {
+      expect(formatted([steady(label)]).description).toBe(`Main set\n- ${label} 2m 80%`);
+    },
+  );
 });
 
 describe("cyclingStepsField schema", () => {
