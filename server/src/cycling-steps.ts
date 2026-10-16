@@ -66,7 +66,8 @@ export const cyclingStepsField = z
   .describe(
     "Ordered steps. A step is warmup/steady/interval/ramp/recovery/rest/cooldown/freeride, or a set " +
       "{type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: " +
-      "{kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. Ramps need low and high. " +
+      "{kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. A ramp needs low and high. " +
+      "On a ramp, low is the start and high is the end, so a ramp down has low above high. " +
       "Every step except freeride and rest needs a power target. A label is a short cue in plain words, " +
       "with no digits and none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, " +
       "rpm, w, watts, km, mi, mtr, press lap).",
@@ -164,7 +165,7 @@ function parsePower(
   const issues = boundIssues(power, path);
   const { kind, value, low, high } = power;
   if (low !== undefined && high !== undefined) {
-    if (low > high) issues.push(`${path}: power.low (${low}) > power.high (${high})`);
+    if (low > high && !isRamp) issues.push(`${path}: power.low (${low}) > power.high (${high})`);
     if (kind !== "zone") return { value: { shape: "range", kind, low, high }, issues };
     const lowZone = toZone(low, `${path}.power.low`, issues);
     const highZone = toZone(high, `${path}.power.high`, issues);

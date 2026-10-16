@@ -58,10 +58,7 @@ describe("formatCyclingSteps rules", () => {
     ).toMatch(/zone must be an integer/);
   });
 
-  it("rejects an inverted zone ramp and an inverted power range", () => {
-    expect(
-      issues([{ type: "ramp", duration: minutes(10), power: { kind: "zone", low: 5, high: 1 } }]),
-    ).toBe("steps[0]: power.low (5) > power.high (1)");
+  it("rejects an inverted range on a step that is not a ramp, for every power kind", () => {
     expect(
       issues([
         {
@@ -71,6 +68,16 @@ describe("formatCyclingSteps rules", () => {
         },
       ]),
     ).toBe("steps[0]: power.low (90) > power.high (70)");
+    expect(
+      issues([
+        { type: "cooldown", duration: minutes(10), power: { kind: "watts", low: 200, high: 150 } },
+      ]),
+    ).toBe("steps[0]: power.low (200) > power.high (150)");
+    expect(
+      issues([
+        { type: "interval", duration: minutes(5), power: { kind: "zone", low: 5, high: 4 } },
+      ]),
+    ).toBe("steps[0]: power.low (5) > power.high (4)");
   });
 
   it("rejects percent_ftp above 200 and watts above 1500 as beyond the sanity bound", () => {
