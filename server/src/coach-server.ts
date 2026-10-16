@@ -1,4 +1,9 @@
-import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
+import {
+  McpServer,
+  type CallToolResult,
+  type StandardSchemaWithJSON,
+} from "@modelcontextprotocol/server";
+import type { z } from "zod";
 import { GET_WORKOUT } from "./read-workout.js";
 import type { CoachDeps, CoachTool, RenderedReply } from "./tool-contract.js";
 import { SPORTS, WORKOUT_KINDS } from "./workout-kinds.js";
@@ -34,7 +39,7 @@ export function createCoachServer(options: CoachServerOptions): McpServer {
       {
         title: tool.title,
         description: tool.description,
-        inputSchema: tool.inputSchema,
+        inputSchema: checkedByTheTool(tool.inputSchema),
         annotations: {
           readOnlyHint: tool.readOnly,
           destructiveHint: false,
@@ -46,6 +51,10 @@ export function createCoachServer(options: CoachServerOptions): McpServer {
     );
   }
   return server;
+}
+
+function checkedByTheTool(schema: z.ZodType): StandardSchemaWithJSON {
+  return { "~standard": { ...schema["~standard"], validate: (value) => ({ value }) } };
 }
 
 function toCallToolResult(reply: RenderedReply): CallToolResult {
