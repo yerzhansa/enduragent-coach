@@ -2,7 +2,7 @@
   "mcpServers": {
     "enduragent-coach": {
       "command": "npx",
-      "args": ["-y", "github:yerzhansa/enduragent-coach#v0.1.2"],
+      "args": ["-y", "github:yerzhansa/enduragent-coach#v0.1.3"],
       "env": { "INTERVALS_API_KEY": "${INTERVALS_API_KEY}" }
     }
   }
