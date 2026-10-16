@@ -1,0 +1,23 @@
+{
+  "name": "enduragent-coach",
+  "displayName": "Enduragent Coach",
+  "version": "0.1.0",
+  "description": "Cycling and strength workouts on your intervals.icu calendar: checked before saving, dated in your time zone, read back after. Works with intervals.icu.",
+  "author": { "name": "Yerzhan Sagyt" },
+  "homepage": "https://enduragent.icu",
+  "repository": "https://github.com/yerzhansa/enduragent-coach",
+  "license": "MIT",
+  "keywords": ["cycling", "strength", "training", "intervals.icu", "workouts"],
+  "logo": "assets/logo.svg",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "INTERVALS_API_KEY": {
+        "type": "string",
+        "title": "intervals.icu API key",
+        "description": "Your personal API key from intervals.icu settings (developer section)."
+      }
+    },
+    "required": ["INTERVALS_API_KEY"]
+  }
+}

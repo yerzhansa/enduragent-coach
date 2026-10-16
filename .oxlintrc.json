@@ -1,0 +1,19 @@
+{
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "no-console": "error",
+    "no-empty": "error",
+    "no-empty-function": "error",
+    "no-warning-comments": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/switch-exhaustiveness-check": "error"
+  },
+  "ignorePatterns": ["dist/**", "docs/**"]
+}

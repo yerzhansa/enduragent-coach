@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+marker=enduragent-coach-hook
+cd "$(git rev-parse --show-toplevel)"
+pnpm check
+local_hook="$(git rev-parse --git-common-dir)/hooks/pre-commit.local"
+if [ -x "$local_hook" ]; then
+  exec "$local_hook" "$@"
+fi
+: "$marker"
