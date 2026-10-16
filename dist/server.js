@@ -43704,7 +43704,7 @@ function formatStepLine(step) {
   if (step.power !== void 0) parts.push(formatPower(step.power, step.type === "ramp"));
   if (step.cadence !== void 0) parts.push(formatCadence(step.cadence));
   const body = parts.join(" ");
-  return step.label === void 0 || step.label === "" ? `- ${body}` : `- ${body} ${step.label}`;
+  return step.label === void 0 || step.label === "" ? `- ${body}` : `- ${step.label} ${body}`;
 }
 function sectionLabel(step) {
   if (step.kind === "set") return "Main set";

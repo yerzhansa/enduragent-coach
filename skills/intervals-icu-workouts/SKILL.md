@@ -107,7 +107,7 @@ A simple step has a `type`, a `duration` and usually a `power` target:
 - `duration`: `{ "value": 15, "unit": "minutes" }` or `{ "value": 30, "unit": "seconds" }`.
 - `power`: one value `{ "kind": "percent_ftp", "value": 75 }` or a range `{ "kind": "percent_ftp", "low": 88, "high": 94 }`. `kind` is `percent_ftp`, `watts` or `zone`.
 - `cadence` (optional): `{ "target": 90 }` or `{ "low": 85, "high": 95 }`.
-- `label` (optional): a short cue on one line in plain words, such as "seated" or "high cadence". intervals.icu reads numbers and target keywords anywhere on a step line, so a label must not contain digits or the words HR, LTHR, pace, MMP, ramp, freeride, rpm, w, watts, km, mi, mtr or "press lap". "hold 95%", "Z4 effort" or "HR check" would change the stored target. Put targets in `power` and `cadence`.
+- `label` (optional): a short cue on one line in plain words, such as "seated" or "high cadence". The tool writes it before the duration, where intervals.icu reads a step's cue. intervals.icu reads numbers and target keywords anywhere on a step line, so a label must not contain digits or the words HR, LTHR, pace, MMP, ramp, freeride, rpm, w, watts, km, mi, mtr or "press lap". "hold 95%", "Z4 effort" or "HR check" would change the stored target. Put targets in `power` and `cadence`.
 
 A set repeats one interval and one recovery a fixed number of times:
 
