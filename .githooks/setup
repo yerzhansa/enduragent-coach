@@ -1,0 +1,23 @@
+#!/bin/sh
+set -e
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+
+root=$(git rev-parse --show-toplevel)
+hooks=$(git rev-parse --git-common-dir)/hooks
+src=$root/.githooks/pre-commit
+dest=$hooks/pre-commit
+marker=enduragent-coach-hook
+
+mkdir -p "$hooks"
+
+if [ -f "$dest" ] && ! grep -q "$marker" "$dest"; then
+  if [ -e "$hooks/pre-commit.local" ]; then
+    echo "enduragent-coach: leaving unmanaged $dest in place (pre-commit.local already exists)" >&2
+    exit 0
+  fi
+  mv "$dest" "$hooks/pre-commit.local"
+  chmod +x "$hooks/pre-commit.local"
+fi
+
+cp "$src" "$dest"
+chmod +x "$dest"
