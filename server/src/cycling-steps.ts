@@ -299,6 +299,7 @@ function formatCadence(cadence: ParsedCadence): string {
 
 function formatStepLine(step: ParsedSimpleStep): string {
   const parts = [formatDuration(step.duration)];
+  if (step.type === "freeride") parts.push("freeride");
   if (step.power !== undefined) parts.push(formatPower(step.power, step.type === "ramp"));
   if (step.cadence !== undefined) parts.push(formatCadence(step.cadence));
   const body = parts.join(" ");

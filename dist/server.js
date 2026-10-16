@@ -43695,6 +43695,7 @@ function formatCadence(cadence) {
 }
 function formatStepLine(step) {
   const parts = [formatDuration(step.duration)];
+  if (step.type === "freeride") parts.push("freeride");
   if (step.power !== void 0) parts.push(formatPower(step.power, step.type === "ramp"));
   if (step.cadence !== void 0) parts.push(formatCadence(step.cadence));
   const body = parts.join(" ");
