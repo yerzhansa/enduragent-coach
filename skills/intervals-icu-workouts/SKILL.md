@@ -133,7 +133,7 @@ A set repeats one interval and one recovery a fixed number of times:
 ### Rules the tool enforces
 
 - Every step needs a power target, except `freeride` and `rest`.
-- A ramp needs `low` and `high`. On a ramp, `low` is the start and `high` is the end, so a ramp from 60% down to 40% has `low` 60 and `high` 40.
+- A ramp needs `low` and `high`. On a ramp, `low` is the start and `high` is the end, so a ramp from 60% down to 40% has `low` 60 and `high` 40. Every other step refuses `low` above `high`, so write a cooldown that eases down as a `ramp`.
 - Any other range needs `low` at or below `high`.
 - Zone values are whole numbers 1 to 7.
 - Percent of FTP goes up to 200. Watts go up to 1500.
