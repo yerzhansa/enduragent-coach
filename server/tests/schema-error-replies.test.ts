@@ -22,44 +22,70 @@ const CREATE_STEP = WORKOUTS_SKILL.split("### 2. Create")[1]?.split("### 3.")[0]
 
 const cyclingArgs = VALID_CREATE_ARGS.cycling(LATER);
 
+const steady = {
+  type: "steady",
+  duration: { value: 5, unit: "minutes" },
+  power: { kind: "percent_ftp", value: 70 },
+} as const;
+
 describe("a create call whose arguments break the input schema", () => {
   it.each([
     [
       "create_cycling_workout",
       "a date not written YYYY-MM-DD",
-      "date",
+      ["date"],
       { ...cyclingArgs, date: "21/10/2026" },
     ],
     [
       "create_cycling_workout",
-      "a bad field inside a step",
-      "steps[0]",
+      "a duration unit a simple step does not take",
+      ["steps[0].duration.unit", "minutes"],
+      { ...cyclingArgs, steps: [{ ...steady, duration: { value: 2, unit: "hours" } }] },
+    ],
+    [
+      "create_cycling_workout",
+      "a power kind the interval of a set does not take",
+      ["steps[1].interval.power.kind", "percent_ftp"],
       {
         ...cyclingArgs,
         steps: [
+          steady,
           {
-            type: "steady",
-            duration: { value: 2, unit: "hours" },
-            power: { kind: "percent_ftp", value: 70 },
+            type: "set",
+            repeat: 3,
+            interval: { ...steady, power: { kind: "ftp", value: 90 } },
+            recovery: steady,
           },
         ],
       },
     ],
     [
+      "create_cycling_workout",
+      "a step type that does not exist",
+      ["steps[2].type", "freeride"],
+      { ...cyclingArgs, steps: [steady, steady, { ...steady, type: "sprint" }] },
+    ],
+    [
       "create_strength_workout",
       "an unknown key",
-      "notes",
+      ["notes"],
       { ...VALID_CREATE_ARGS.strength(LATER), notes: "bring chalk" },
     ],
     [
       "create_strength_workout",
       "a fractional duration",
-      "durationMinutes",
+      ["durationMinutes"],
       { ...VALID_CREATE_ARGS.strength(LATER), durationMinutes: 1.5 },
     ],
+    [
+      "create_strength_workout",
+      "a session description that is not text",
+      ["description", "string"],
+      { ...VALID_CREATE_ARGS.strength(LATER), description: ["Back squat 4x6"] },
+    ],
   ] as const)(
-    "%s answers %s with a JSON invalid_input refusal naming %s, without any request",
-    async (tool, _label, field, args) => {
+    "%s answers %s with a JSON invalid_input refusal naming %j, without any request",
+    async (tool, _label, fragments, args) => {
       const intervals = fakeIntervals();
       const { isError, reply } = await (await openSession({ intervals })).call(tool, args);
       expect(isError).toBe(true);
@@ -69,7 +95,7 @@ describe("a create call whose arguments break the input schema", () => {
         code: "invalid_input",
         next: INVALID_INPUT_NEXT,
       });
-      expect(reply["details"]).toContain(field);
+      for (const fragment of fragments) expect(reply["details"]).toContain(fragment);
       expect(intervals.requests).toEqual([]);
     },
   );
@@ -79,6 +105,30 @@ describe("a create call whose arguments break the input schema", () => {
     for (const name of ["intervals-icu-workouts", "strength-workouts"]) {
       expect(skill(name)).not.toMatch(/plain-text/);
     }
+  });
+});
+
+function refusalTable(text: string): Map<string, string> {
+  const rows = text
+    .split("\n")
+    .filter((line) => line.startsWith("| `"))
+    .map((line) => line.split("|").map((cell) => cell.trim()));
+  return new Map(rows.map(([, code = "", todo = ""]) => [code, todo]));
+}
+
+describe("the skills' refusal tables", () => {
+  const workouts = refusalTable(WORKOUTS_SKILL);
+  const strength = refusalTable(skill("strength-workouts"));
+
+  it("tell the agent what to do with invalid_input", () => {
+    expect(workouts.get("`invalid_input`")).toMatch(/details/);
+    expect(strength.get("`invalid_input`")).toMatch(/details/);
+  });
+
+  it("give strength the same advice as cycling for each shared code", () => {
+    expect(Object.fromEntries(strength)).toEqual(
+      Object.fromEntries([...strength.keys()].map((code) => [code, workouts.get(code)])),
+    );
   });
 });
 

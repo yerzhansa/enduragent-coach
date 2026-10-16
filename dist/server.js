@@ -43543,7 +43543,7 @@ var setStepSchema = external_exports.object({
   interval: simpleStepSchema,
   recovery: simpleStepSchema
 }).strict();
-var cyclingStepsField = external_exports.array(external_exports.union([simpleStepSchema, setStepSchema])).min(1).max(40).describe(
+var cyclingStepsField = external_exports.array(external_exports.discriminatedUnion("type", [simpleStepSchema, setStepSchema])).min(1).max(40).describe(
   "Ordered steps. A step is warmup/steady/interval/ramp/recovery/rest/cooldown/freeride, or a set {type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: {kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. A ramp needs low and high. On a ramp, low is the start and high is the end, so a ramp down has low above high. Every other step refuses low above high, so a cooldown that eases down is a ramp. Every step except freeride and rest needs a power target. A label is a short cue in plain words, with no digits, none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, maxeffort, hidepower, intensity=, power=, rpm, w, watts, km, mi, mtr, press lap), and no two letters followed by / (such as en/ or on/), which intervals.icu reads as a language prefix. Leave out a label rather than send a blank one."
 );
 var ZONES = [1, 2, 3, 4, 5, 6, 7];
