@@ -83,6 +83,10 @@ describe("create_cycling_workout", () => {
       "easy intensity=recovery",
       'steps[0].label: "easy intensity=recovery" contains "intensity=", which intervals.icu reads as workout text. Use short words without numbers or target keywords',
     ],
+    [
+      "on/off",
+      'steps[0].label: "on/off" contains "on/", which intervals.icu reads as a language prefix (two letters followed by /). Write the words out instead, such as "on and off"',
+    ],
     ["  ", 'steps[0].label: "  " is blank. Leave the label out or write a short cue'],
   ])("answers invalid_workout for the label %j, without any request", async (label, details) => {
     const intervals = fakeIntervals();

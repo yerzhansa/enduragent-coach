@@ -216,9 +216,8 @@ describe("step labels", () => {
     ["show it /HidePower", "HidePower"],
     ["MaxEffort sprint", "MaxEffort"],
     ["easy intensity=recovery", "intensity="],
-    ["en/Hello", "en/"],
-    ["spin fr/Bonjour", "fr/"],
-    ["XX/cue", "XX/"],
+    ["easy power=lap", "power="],
+    ["Power=lap spin", "Power="],
     ["sprint ٣ times", "٣"],
     ["hold ３ breaths", "３"],
   ])("rejects %j, naming %j as the workout text intervals.icu reads", (label, token) => {
@@ -227,11 +226,26 @@ describe("step labels", () => {
     );
   });
 
-  it.each(["   ", " ", "​"])("rejects the blank label %j", (label) => {
+  it.each([
+    ["en/Hello", "en/"],
+    ["spin fr/Bonjour", "fr/"],
+    ["XX/cue", "XX/"],
+    ["on/off", "on/"],
+    ["pt-BR/Ola", "BR/"],
+  ])("rejects %j, naming %j as a language prefix", (label, prefix) => {
     expect(issues([steady(label)])).toBe(
-      `steps[0].label: ${JSON.stringify(label)} is blank. Leave the label out or write a short cue`,
+      `steps[0].label: ${JSON.stringify(label)} contains ${JSON.stringify(prefix)}, which intervals.icu reads as a language prefix (two letters followed by /). Write the words out instead, such as "on and off"`,
     );
   });
+
+  it.each(["   ", " ", "​", "\u3164", "\u115f\u1160", "\uffa0", " \u2800\u200b "])(
+    "rejects the blank label %j",
+    (label) => {
+      expect(issues([steady(label)])).toBe(
+        `steps[0].label: ${JSON.stringify(label)} is blank. Leave the label out or write a short cue`,
+      );
+    },
+  );
 
   it("writes an empty label as a step with no cue", () => {
     expect(formatted([steady("")]).description).toBe("Main set\n- 2m 80%");
@@ -265,6 +279,8 @@ describe("step labels", () => {
     "max effort",
     "hide the pain",
     "and/or",
+    "power through",
+    "\u3164seated",
   ])(
     "writes the plain label %j before the duration, where intervals.icu reads the cue",
     (label) => {
