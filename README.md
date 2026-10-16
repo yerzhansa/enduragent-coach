@@ -24,7 +24,7 @@ It also has three skills that teach the agent how to use them: `intervals-icu-wo
 - An intervals.icu API key.
 - A time zone set in your intervals.icu profile. The plugin needs it to know what "today" is.
 - An FTP set in intervals.icu, if you want percent-of-FTP targets to turn into watts.
-- Node.js 20 or later and git, both on your PATH. The server starts with `npx -y github:yerzhansa/enduragent-coach#v0.1.1`, which fetches the pinned release from GitHub on each start.
+- Node.js 20 or later and git, both on your PATH. The server starts with `npx -y github:yerzhansa/enduragent-coach#v0.1.2`, which fetches the pinned release from GitHub on each start.
 - Optional: Garmin Connect or Wahoo connected to intervals.icu, so planned workouts reach your head unit.
 
 ## Install
