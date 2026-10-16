@@ -148,6 +148,16 @@ describe("formatCyclingSteps description", () => {
     expect(description).toBe("Main set\n- 10m ramp 50-80%");
   });
 
+  it.each([
+    { kind: "percent_ftp", low: 60, high: 40, text: "ramp 60-40%" },
+    { kind: "watts", low: 200, high: 150, text: "ramp 200-150w" },
+    { kind: "zone", low: 2, high: 1, text: "ramp 65-45%" },
+  ] as const)("writes a $kind ramp down from low to high as start to end", ({ text, ...power }) => {
+    expect(
+      formatted([{ type: "ramp", duration: { value: 10, unit: "minutes" }, power }]).description,
+    ).toBe(`Main set\n- 10m ${text}`);
+  });
+
   it("keeps zone targets as Z shorthand so intervals.icu applies the athlete's own bands", () => {
     expect(
       formatted([
