@@ -15,6 +15,14 @@ This skill covers gym sessions for cyclists. The save and read-back protocol is 
 4. After `created`, call `get_workout` with the `eventId`. Report a one-line summary, then the stored description in a code block. Strength workouts have no power chart, so skip the chart line.
 5. Never say "saved" without that read-back.
 
+On `refused`, nothing was saved. Do what `next` says. These codes come from your own arguments. The `intervals-icu-workouts` skill lists the others.
+
+| code                | What to do                                  |
+| ------------------- | ------------------------------------------- |
+| `invalid_input`     | Fix what `details` lists and call again.    |
+| `invalid_date`      | Use a real date written `YYYY-MM-DD`.       |
+| `past_date_refused` | Pick today or a later day with the athlete. |
+
 ## Input
 
 `create_strength_workout` takes a flat object:

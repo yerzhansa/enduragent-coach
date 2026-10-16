@@ -3,7 +3,7 @@ import {
   type CallToolResult,
   type StandardSchemaWithJSON,
 } from "@modelcontextprotocol/server";
-import type { z } from "zod";
+import { z } from "zod";
 import { GET_WORKOUT } from "./read-workout.js";
 import type { CoachDeps, CoachTool, RenderedReply } from "./tool-contract.js";
 import { SPORTS, WORKOUT_KINDS } from "./workout-kinds.js";
@@ -54,8 +54,30 @@ export function createCoachServer(options: CoachServerOptions): McpServer {
 }
 
 function checkedByTheTool(schema: z.ZodType): StandardSchemaWithJSON {
-  return { "~standard": { ...schema["~standard"], validate: (value) => ({ value }) } };
+  const standard = schema["~standard"];
+  return {
+    "~standard": {
+      ...standard,
+      validate: (value) => ({ value }),
+      jsonSchema: {
+        ...standard.jsonSchema,
+        input: (options) =>
+          standard.jsonSchema.input({
+            ...options,
+            libraryOptions: { override: discriminatedUnionAsAnyOf },
+          }),
+      },
+    },
+  };
 }
+
+type JsonSchemaOverride = NonNullable<z.core.ToJSONSchemaParams["override"]>;
+
+const discriminatedUnionAsAnyOf: JsonSchemaOverride = ({ zodSchema, jsonSchema }) => {
+  if (!(zodSchema instanceof z.ZodDiscriminatedUnion) || jsonSchema.oneOf === undefined) return;
+  jsonSchema.anyOf = jsonSchema.oneOf;
+  delete jsonSchema.oneOf;
+};
 
 function toCallToolResult(reply: RenderedReply): CallToolResult {
   return {

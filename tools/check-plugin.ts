@@ -217,6 +217,14 @@ function schemaVocabulary(): ReadonlySet<string> {
 
 const TOOL_TOKEN = /\b(?:create_[a-z0-9]+_workout|get_[a-z0-9]+)\b/g;
 const SNAKE_CODE = /`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`/g;
+const REFUSAL_ROW_CODES = /^\| *(`[^|]*?) *\|/gm;
+const BACKTICKED = /`([^`]+)`/g;
+
+function refusalTableCodes(body: string): readonly string[] {
+  return [...body.matchAll(REFUSAL_ROW_CODES)].flatMap((row) =>
+    [...(row[1] ?? "").matchAll(BACKTICKED)].map((code) => code[1] ?? ""),
+  );
+}
 
 function checkSkills(skills: readonly SkillFile[]): Finding[] {
   const findings: Finding[] = [];
@@ -245,6 +253,13 @@ function checkSkills(skills: readonly SkillFile[]): Finding[] {
         continue;
       report(`\`${code}\` is not a reply status, refusal code, tool name or schema value`);
     }
+    const tableCodes = refusalTableCodes(skill.body);
+    for (const code of tableCodes) {
+      if (!isRefusalCode(code))
+        report(`the refusal table lists \`${code}\`, which is not a refusal code`);
+    }
+    if (/\bcreate_[a-z0-9]+_workout\b/.test(skill.body) && !tableCodes.includes("invalid_input"))
+      report("the refusal table has no `invalid_input` row, which every create tool can return");
   }
   for (const tool of TOOL_NAMES) {
     if (!mentioned.has(tool))

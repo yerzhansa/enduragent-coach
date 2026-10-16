@@ -49,6 +49,7 @@ Set `confirmDuplicate: true` after an uncertain reply only in that last case. An
 
 | code                        | What to do                                                                   |
 | --------------------------- | ---------------------------------------------------------------------------- |
+| `invalid_input`             | Fix what `details` lists and call again.                                     |
 | `invalid_workout`           | Fix the steps named in `details` and call again.                             |
 | `invalid_date`              | Use a real date written `YYYY-MM-DD`.                                        |
 | `past_date_refused`         | Pick today or a later day with the athlete.                                  |

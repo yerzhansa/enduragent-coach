@@ -49,9 +49,12 @@ const valid: PluginFiles = {
   skills: [
     skill(
       "intervals-icu-workouts",
-      "Call `create_cycling_workout`, then `get_workout`. On `duplicate_found` ask; on `past_date_refused` pick today. Use `percent_ftp`.",
+      "Call `create_cycling_workout`, then `get_workout`. On `duplicate_found` ask. Use `percent_ftp`.\n\n| code | What to do |\n| --- | --- |\n| `invalid_input` | Fix it. |\n| `unauthorized`, `forbidden` | Check the key. |",
     ),
-    skill("strength-workouts", "Call create_strength_workout."),
+    skill(
+      "strength-workouts",
+      "Call create_strength_workout.\n\n| code | What to do |\n| --- | --- |\n| `invalid_input` | Fix it. |",
+    ),
   ],
   existingPaths: new Set(["assets/logo.svg"]),
 };
@@ -133,14 +136,14 @@ describe("checkPlugin", () => {
     ).toHaveLength(4);
   });
 
-  it("requires skill names to equal folders and skills to mention exactly the server's tools and known codes", () => {
+  it("requires skill names to equal folders, skills to mention exactly the server's tools and known codes, and refusal tables to list real refusal codes including invalid_input", () => {
     expect(
       messages({
         ...valid,
         skills: [
           skill(
             "strength-workouts",
-            "Call create_strength_workout or intervals_create_workout. On `quota_exceeded` stop.",
+            "Call create_strength_workout or intervals_create_workout. On `quota_exceeded` stop.\n\n| code | What to do |\n| --- | --- |\n| `created` | Read it back. |",
             "strength",
           ),
         ],
@@ -148,6 +151,8 @@ describe("checkPlugin", () => {
     ).toEqual([
       'frontmatter name "strength" must equal its folder "strength-workouts"',
       "`quota_exceeded` is not a reply status, refusal code, tool name or schema value",
+      "the refusal table lists `created`, which is not a refusal code",
+      "the refusal table has no `invalid_input` row, which every create tool can return",
       "no skill mentions create_cycling_workout",
       "no skill mentions get_workout",
     ]);

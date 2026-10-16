@@ -60,7 +60,7 @@ const setStepSchema = z
   .strict();
 
 export const cyclingStepsField = z
-  .array(z.union([simpleStepSchema, setStepSchema]))
+  .array(z.discriminatedUnion("type", [simpleStepSchema, setStepSchema]))
   .min(1)
   .max(40)
   .describe(
