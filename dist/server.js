@@ -43367,7 +43367,7 @@ function keyedLock() {
 }
 
 // server/src/create-workout.ts
-var NO_CONTROL_CHARACTERS = new RegExp("^\\P{Cc}*$", "u");
+var NO_CONTROL_CHARACTERS = /^[^\p{Cc}\p{Zl}\p{Zp}]*$/u;
 var workoutNameField = external_exports.string().trim().min(1).max(120).regex(NO_CONTROL_CHARACTERS, "no line breaks or control characters").describe("Calendar card title, one line");
 var commonCreateFields = {
   date: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("The athlete's local calendar day, YYYY-MM-DD, today or later"),

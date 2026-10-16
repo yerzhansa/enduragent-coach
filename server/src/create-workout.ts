@@ -33,7 +33,7 @@ export interface EventBody {
   readonly movingTimeSeconds: number;
 }
 
-export const NO_CONTROL_CHARACTERS = /^\P{Cc}*$/u;
+export const NO_CONTROL_CHARACTERS = /^[^\p{Cc}\p{Zl}\p{Zp}]*$/u;
 
 export const workoutNameField = z
   .string()

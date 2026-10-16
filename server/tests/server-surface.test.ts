@@ -91,6 +91,27 @@ describe("create_cycling_workout", () => {
       externalId: `enduragent-coach:${LATER}:cycling-sweet-spot-3x15`,
     });
   });
+
+  it("refuses a label with a paragraph separator and writes nothing", async () => {
+    const intervals = fakeIntervals();
+    const { isError } = await (
+      await openSession({ intervals })
+    ).call("create_cycling_workout", {
+      date: LATER,
+      name: "Endurance",
+      steps: [
+        {
+          type: "steady",
+          duration: { value: 20, unit: "minutes" },
+          power: { kind: "percent_ftp", value: 70 },
+          label: "easy\u2029spin",
+        },
+      ],
+    });
+    expect(isError).toBe(true);
+    expect(intervals.sent).toEqual([]);
+    expect(intervals.calendar).toEqual([]);
+  });
 });
 
 describe("create_strength_workout", () => {
