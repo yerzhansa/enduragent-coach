@@ -26,7 +26,7 @@ describe("formatCyclingSteps rules", () => {
         { type: "rest", duration: minutes(5) },
         { type: "freeride", duration: minutes(20) },
       ]).description,
-    ).toBe("Main set\n- 5m\n- 20m");
+    ).toBe("Main set\n- 5m\n- 20m freeride");
   });
 
   it("lists every bad step path, including inside sets", () => {
