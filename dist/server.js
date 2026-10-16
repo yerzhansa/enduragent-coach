@@ -43544,7 +43544,7 @@ var setStepSchema = external_exports.object({
   recovery: simpleStepSchema
 }).strict();
 var cyclingStepsField = external_exports.array(external_exports.union([simpleStepSchema, setStepSchema])).min(1).max(40).describe(
-  "Ordered steps. A step is warmup/steady/interval/ramp/recovery/rest/cooldown/freeride, or a set {type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: {kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. A ramp needs low and high. On a ramp, low is the start and high is the end, so a ramp down has low above high. Every other step refuses low above high, so a cooldown that eases down is a ramp. Every step except freeride and rest needs a power target. A label is a short cue in plain words, with no digits and none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, rpm, w, watts, km, mi, mtr, press lap)."
+  "Ordered steps. A step is warmup/steady/interval/ramp/recovery/rest/cooldown/freeride, or a set {type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: {kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. A ramp needs low and high. On a ramp, low is the start and high is the end, so a ramp down has low above high. Every other step refuses low above high, so a cooldown that eases down is a ramp. Every step except freeride and rest needs a power target. A label is a short cue in plain words, with no digits, none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, maxeffort, hidepower, intensity=, power=, rpm, w, watts, km, mi, mtr, press lap), and no two letters followed by / (such as en/ or on/), which intervals.icu reads as a language prefix. Leave out a label rather than send a blank one."
 );
 var ZONES = [1, 2, 3, 4, 5, 6, 7];
 var ZONE_MIDPOINT_PERCENT = {
@@ -43632,10 +43632,19 @@ function parseCadence(cadence, path) {
   }
   return target === void 0 ? { value: void 0, issues: [`${path}: cadence requires 'target' or 'low'+'high'`] } : { value: { shape: "single", rpm: target }, issues: [] };
 }
-var WORKOUT_TEXT_TOKEN = new RegExp("\\d|<!>|(?<!\\p{L})(?:hr|lthr|pace|mmp|ramp|freeride|rpm|w|watts|km|mi|mtr|press\\s+lap)(?!\\p{L})", "iu");
+var WORKOUT_TEXT_TOKEN = new RegExp("\\p{Nd}|<!>|(?<!\\p{L})(?:intensity=|power=|(?:hr|lthr|pace|mmp|ramp|freeride|maxeffort|hidepower|rpm|w|watts|km|mi|mtr|press\\s+lap)(?!\\p{L}))", "iu");
+var LANGUAGE_PREFIX = new RegExp("(?<!\\p{L})[a-z]{2}\\/", "iu");
+var BLANK_LABEL = /^[\s\p{Cf}\u115f\u1160\u2800\u3164\uffa0]+$/u;
 function labelIssue(label, path) {
-  const token = label === void 0 ? null : WORKOUT_TEXT_TOKEN.exec(label);
-  return token === null ? void 0 : `${path}.label: ${JSON.stringify(label)} contains ${JSON.stringify(token[0])}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`;
+  if (label === void 0) return void 0;
+  const quoted = `${path}.label: ${JSON.stringify(label)}`;
+  if (BLANK_LABEL.test(label))
+    return `${quoted} is blank. Leave the label out or write a short cue`;
+  const prefix = LANGUAGE_PREFIX.exec(label);
+  if (prefix !== null)
+    return `${quoted} contains ${JSON.stringify(prefix[0])}, which intervals.icu reads as a language prefix (two letters followed by /). Write the words out instead, such as "on and off"`;
+  const token = WORKOUT_TEXT_TOKEN.exec(label);
+  return token === null ? void 0 : `${quoted} contains ${JSON.stringify(token[0])}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`;
 }
 function parseSimpleStep(step, path) {
   const issues = [];

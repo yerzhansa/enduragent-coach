@@ -70,8 +70,10 @@ export const cyclingStepsField = z
       "On a ramp, low is the start and high is the end, so a ramp down has low above high. " +
       "Every other step refuses low above high, so a cooldown that eases down is a ramp. " +
       "Every step except freeride and rest needs a power target. A label is a short cue in plain words, " +
-      "with no digits and none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, " +
-      "rpm, w, watts, km, mi, mtr, press lap).",
+      "with no digits, none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, " +
+      "maxeffort, hidepower, intensity=, power=, rpm, w, watts, km, mi, mtr, press lap), and no two " +
+      "letters followed by / (such as en/ or on/), which intervals.icu reads as a language prefix. " +
+      "Leave out a label rather than send a blank one.",
   );
 
 export type CyclingSteps = z.output<typeof cyclingStepsField>;
@@ -242,13 +244,24 @@ function parseCadence(cadence: CadenceTarget, path: string): Parsed<ParsedCadenc
 }
 
 const WORKOUT_TEXT_TOKEN =
-  /\d|<!>|(?<!\p{L})(?:hr|lthr|pace|mmp|ramp|freeride|rpm|w|watts|km|mi|mtr|press\s+lap)(?!\p{L})/iu;
+  /\p{Nd}|<!>|(?<!\p{L})(?:intensity=|power=|(?:hr|lthr|pace|mmp|ramp|freeride|maxeffort|hidepower|rpm|w|watts|km|mi|mtr|press\s+lap)(?!\p{L}))/iu;
+
+const LANGUAGE_PREFIX = /(?<!\p{L})[a-z]{2}\//iu;
+
+const BLANK_LABEL = /^[\s\p{Cf}\u115f\u1160\u2800\u3164\uffa0]+$/u;
 
 function labelIssue(label: string | undefined, path: string): string | undefined {
-  const token = label === undefined ? null : WORKOUT_TEXT_TOKEN.exec(label);
+  if (label === undefined) return undefined;
+  const quoted = `${path}.label: ${JSON.stringify(label)}`;
+  if (BLANK_LABEL.test(label))
+    return `${quoted} is blank. Leave the label out or write a short cue`;
+  const prefix = LANGUAGE_PREFIX.exec(label);
+  if (prefix !== null)
+    return `${quoted} contains ${JSON.stringify(prefix[0])}, which intervals.icu reads as a language prefix (two letters followed by /). Write the words out instead, such as "on and off"`;
+  const token = WORKOUT_TEXT_TOKEN.exec(label);
   return token === null
     ? undefined
-    : `${path}.label: ${JSON.stringify(label)} contains ${JSON.stringify(token[0])}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`;
+    : `${quoted} contains ${JSON.stringify(token[0])}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`;
 }
 
 function parseSimpleStep(step: SimpleStep, path: string): Parsed<ParsedSimpleStep> {

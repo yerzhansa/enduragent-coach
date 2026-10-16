@@ -211,6 +211,46 @@ describe("step labels", () => {
     expect(issues([steady(label)])).toMatch(/^steps\[0\]\.label: /);
   });
 
+  it.each([
+    ["hidepower now", "hidepower"],
+    ["show it /HidePower", "HidePower"],
+    ["MaxEffort sprint", "MaxEffort"],
+    ["easy intensity=recovery", "intensity="],
+    ["easy power=lap", "power="],
+    ["Power=lap spin", "Power="],
+    ["sprint ٣ times", "٣"],
+    ["hold ３ breaths", "３"],
+  ])("rejects %j, naming %j as the workout text intervals.icu reads", (label, token) => {
+    expect(issues([steady(label)])).toBe(
+      `steps[0].label: ${JSON.stringify(label)} contains ${JSON.stringify(token)}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`,
+    );
+  });
+
+  it.each([
+    ["en/Hello", "en/"],
+    ["spin fr/Bonjour", "fr/"],
+    ["XX/cue", "XX/"],
+    ["on/off", "on/"],
+    ["pt-BR/Ola", "BR/"],
+  ])("rejects %j, naming %j as a language prefix", (label, prefix) => {
+    expect(issues([steady(label)])).toBe(
+      `steps[0].label: ${JSON.stringify(label)} contains ${JSON.stringify(prefix)}, which intervals.icu reads as a language prefix (two letters followed by /). Write the words out instead, such as "on and off"`,
+    );
+  });
+
+  it.each(["   ", " ", "​", "\u3164", "\u115f\u1160", "\uffa0", " \u2800\u200b "])(
+    "rejects the blank label %j",
+    (label) => {
+      expect(issues([steady(label)])).toBe(
+        `steps[0].label: ${JSON.stringify(label)} is blank. Leave the label out or write a short cue`,
+      );
+    },
+  );
+
+  it("writes an empty label as a step with no cue", () => {
+    expect(formatted([steady("")]).description).toBe("Main set\n- 2m 80%");
+  });
+
   it("names the label's path inside a set, alongside the step's other issues", () => {
     const details = issues([
       steady("seated"),
@@ -235,6 +275,12 @@ describe("step labels", () => {
     "all-out",
     "Shred the climb",
     "Stay seated",
+    "low intensity",
+    "max effort",
+    "hide the pain",
+    "and/or",
+    "power through",
+    "\u3164seated",
   ])(
     "writes the plain label %j before the duration, where intervals.icu reads the cue",
     (label) => {

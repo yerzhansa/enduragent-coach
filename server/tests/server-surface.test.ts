@@ -78,6 +78,39 @@ describe("create_cycling_workout", () => {
     expect(intervals.requests).toEqual([]);
   });
 
+  it.each([
+    [
+      "easy intensity=recovery",
+      'steps[0].label: "easy intensity=recovery" contains "intensity=", which intervals.icu reads as workout text. Use short words without numbers or target keywords',
+    ],
+    [
+      "on/off",
+      'steps[0].label: "on/off" contains "on/", which intervals.icu reads as a language prefix (two letters followed by /). Write the words out instead, such as "on and off"',
+    ],
+    ["  ", 'steps[0].label: "  " is blank. Leave the label out or write a short cue'],
+  ])("answers invalid_workout for the label %j, without any request", async (label, details) => {
+    const intervals = fakeIntervals();
+    const session = await openSession({ intervals });
+    const { reply } = await session.call("create_cycling_workout", {
+      ...VALID_CREATE_ARGS.cycling(LATER),
+      steps: [
+        {
+          type: "steady",
+          duration: { value: 20, unit: "minutes" },
+          power: { kind: "percent_ftp", value: 70 },
+          label,
+        },
+      ],
+    });
+    expect(reply).toMatchObject({
+      status: "refused",
+      code: "invalid_workout",
+      saved: "no",
+      details,
+    });
+    expect(intervals.requests).toEqual([]);
+  });
+
   it("sends a Ride with the serialized description and its moving time", async () => {
     const intervals = fakeIntervals();
     await (
