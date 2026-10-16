@@ -3,11 +3,14 @@ import { WORKOUT_KINDS } from "../src/workout-kinds.js";
 import {
   BAD_GATEWAY,
   BAD_REQUEST,
+  CONFLICT,
   FORBIDDEN,
   NOT_FOUND,
   RATE_LIMIT,
+  SERVER_ERROR,
   TIMEOUT,
   UNAUTHORIZED,
+  UNPROCESSABLE,
   fakeIntervals,
   type CreateFailure,
 } from "./support/fake-intervals.js";
@@ -167,6 +170,8 @@ describe.each(WORKOUT_KINDS)("$name", (kind) => {
     ["RateLimit", RATE_LIMIT, "rate_limited"],
     ["NotFound", NOT_FOUND, "rejected"],
     ["Http 400", BAD_REQUEST, "rejected"],
+    ["Http 409", CONFLICT, "rejected"],
+    ["Http 422", UNPROCESSABLE, "rejected"],
   ] as const)("refuses with nothing written for %s on the write", async (_label, error, code) => {
     const intervals = fakeIntervals({ createFailure: { error, lands: false } });
     const session = await openSession({ intervals });
@@ -198,6 +203,8 @@ describe.each(WORKOUT_KINDS)("$name", (kind) => {
 
   it.each<[string, CreateFailure]>([
     ["timed out", { error: TIMEOUT, lands: false }],
+    ["came back 500", { error: SERVER_ERROR, lands: false }],
+    ["came back 502", { error: BAD_GATEWAY, lands: false }],
     ["threw", { throws: true, lands: false }],
   ])(
     "reports uncertain with the attempted external id when the write %s and the re-read finds nothing",
@@ -267,6 +274,13 @@ describe.each(WORKOUT_KINDS)("$name", (kind) => {
       recovered: true,
       eventId: intervals.calendar[0]?.id,
     });
+  });
+
+  it("names the status and intervals.icu's message when it refuses the write with a 4xx", async () => {
+    const intervals = fakeIntervals({ createFailure: { error: UNPROCESSABLE, lands: false } });
+    const { reply } = await (await openSession({ intervals })).call(kind.name, args(LATER));
+    expect(reply["details"]).toContain("422 Unprocessable Entity");
+    expect(reply["details"]).toContain("movingTime must be positive");
   });
 
   it("never echoes the error body beyond its short message", async () => {

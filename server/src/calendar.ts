@@ -231,7 +231,7 @@ export function readFailure(error: ApiError): ReadFailure {
     case "Timeout":
     case "Network":
     case "Unknown":
-      return refusal("intervals_unavailable", describeUnavailable(error));
+      return refusal("intervals_unavailable", describeFailure(error));
     default: {
       const unreachable: never = error;
       return unreachable;
@@ -279,20 +279,17 @@ export function writeFailure(error: ApiError): WriteFailure {
         refusal: refusal("rejected", "intervals.icu answered 404 Not Found."),
       };
     case "Http":
-      return error.status === 400
+      return error.status >= 400 && error.status <= 499
         ? {
             written: "no",
-            refusal: refusal(
-              "rejected",
-              withBodyMessage("intervals.icu answered 400 Bad Request.", error.body),
-            ),
+            refusal: refusal("rejected", withBodyMessage(describeFailure(error), error.body)),
           }
-        : { written: "maybe", details: describeUnavailable(error) };
+        : { written: "maybe", details: describeFailure(error) };
     case "Validation":
     case "Timeout":
     case "Network":
     case "Unknown":
-      return { written: "maybe", details: describeUnavailable(error) };
+      return { written: "maybe", details: describeFailure(error) };
     default: {
       const unreachable: never = error;
       return unreachable;
@@ -300,12 +297,12 @@ export function writeFailure(error: ApiError): WriteFailure {
   }
 }
 
-type UnavailableError = Extract<
+type DescribedError = Extract<
   ApiError,
   { kind: "Http" | "Validation" | "Timeout" | "Network" | "Unknown" }
 >;
 
-function describeUnavailable(error: UnavailableError): string {
+function describeFailure(error: DescribedError): string {
   switch (error.kind) {
     case "Http":
       return error.statusText === ""

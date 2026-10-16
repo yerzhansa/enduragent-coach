@@ -146,3 +146,21 @@ export const BAD_REQUEST: ApiError = {
   statusText: "Bad Request",
   body: { error: "name too long", trace: "internal stack frame" },
 };
+export const CONFLICT: ApiError = {
+  kind: "Http",
+  status: 409,
+  statusText: "Conflict",
+  body: { message: "event already exists" },
+};
+export const UNPROCESSABLE: ApiError = {
+  kind: "Http",
+  status: 422,
+  statusText: "Unprocessable Entity",
+  body: { message: "movingTime must be positive" },
+};
+export const SERVER_ERROR: ApiError = {
+  kind: "Http",
+  status: 500,
+  statusText: "Internal Server Error",
+  body: null,
+};
