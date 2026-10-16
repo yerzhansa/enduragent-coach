@@ -1,6 +1,6 @@
 {
   "name": "enduragent-coach",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Cycling and strength workouts for your intervals.icu calendar, checked before saving and read back after.",
   "homepage": "https://enduragent.icu",
