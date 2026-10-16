@@ -71,7 +71,8 @@ export const cyclingStepsField = z
       "Every other step refuses low above high, so a cooldown that eases down is a ramp. " +
       "Every step except freeride and rest needs a power target. A label is a short cue in plain words, " +
       "with no digits and none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, " +
-      "rpm, w, watts, km, mi, mtr, press lap).",
+      "maxeffort, hidepower, intensity=, rpm, w, watts, km, mi, mtr, press lap) or language prefixes " +
+      "such as en/. Leave out a label rather than send a blank one.",
   );
 
 export type CyclingSteps = z.output<typeof cyclingStepsField>;
@@ -242,10 +243,15 @@ function parseCadence(cadence: CadenceTarget, path: string): Parsed<ParsedCadenc
 }
 
 const WORKOUT_TEXT_TOKEN =
-  /\d|<!>|(?<!\p{L})(?:hr|lthr|pace|mmp|ramp|freeride|rpm|w|watts|km|mi|mtr|press\s+lap)(?!\p{L})/iu;
+  /\p{Nd}|<!>|(?<!\p{L})(?:[a-z]{2}\/|intensity=|(?:hr|lthr|pace|mmp|ramp|freeride|maxeffort|hidepower|rpm|w|watts|km|mi|mtr|press\s+lap)(?!\p{L}))/iu;
+
+const BLANK_LABEL = /^[\s\p{Cf}]+$/u;
 
 function labelIssue(label: string | undefined, path: string): string | undefined {
-  const token = label === undefined ? null : WORKOUT_TEXT_TOKEN.exec(label);
+  if (label === undefined) return undefined;
+  if (BLANK_LABEL.test(label))
+    return `${path}.label: ${JSON.stringify(label)} is blank. Leave the label out or write a short cue`;
+  const token = WORKOUT_TEXT_TOKEN.exec(label);
   return token === null
     ? undefined
     : `${path}.label: ${JSON.stringify(label)} contains ${JSON.stringify(token[0])}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`;
