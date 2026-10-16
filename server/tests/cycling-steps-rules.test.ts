@@ -130,6 +130,66 @@ describe("formatCyclingSteps rules", () => {
   });
 });
 
+const steady = (label: string) => ({
+  type: "steady" as const,
+  duration: minutes(2),
+  power: { kind: "percent_ftp" as const, value: 80 },
+  label,
+});
+
+describe("step labels", () => {
+  it.each([
+    "hold 95% then sprint",
+    "Z4 effort",
+    "90rpm",
+    "5m easy",
+    "HR check",
+    "hr check",
+    "3x",
+    "push to LTHR",
+    "ramp up",
+    "Freeride",
+    "steady pace",
+    "MMP effort",
+    "high rpm",
+    "big w",
+    "hold watts",
+    "last km",
+    "press lap",
+    "wait <!> here",
+  ])("rejects %j, which intervals.icu would read as workout text", (label) => {
+    expect(issues([steady(label)])).toMatch(/^steps\[0\]\.label: /);
+  });
+
+  it("names the label's path inside a set, alongside the step's other issues", () => {
+    const details = issues([
+      steady("seated"),
+      {
+        type: "set",
+        repeat: 3,
+        interval: { type: "interval", duration: minutes(3), label: "Z5" },
+        recovery: { ...steady("easy"), label: "spin 2 min" },
+      },
+    ]);
+    expect(details.split("; ").map((issue) => issue.split(":")[0])).toEqual([
+      "steps[1].interval",
+      "steps[1].interval.label",
+      "steps[1].recovery.label",
+    ]);
+  });
+
+  it.each([
+    "Sweet spot",
+    "Over unders",
+    "high cadence",
+    "all-out",
+    "Shred the climb",
+    "Stay seated",
+  ])("writes the plain label %j unchanged", (label) => {
+    expect(formatted([steady(label)]).description).toBe(`Main set\n- 2m 80% ${label}`);
+  });
+});
+
 describe("cyclingStepsField schema", () => {
   const step = { type: "steady", duration: minutes(1), power: { kind: "percent_ftp", value: 65 } };
 

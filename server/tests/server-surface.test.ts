@@ -58,6 +58,26 @@ describe("create_cycling_workout", () => {
     expect(intervals.requests).toEqual([]);
   });
 
+  it("answers invalid_workout naming a label intervals.icu would read as a target, without any request", async () => {
+    const intervals = fakeIntervals();
+    const session = await openSession({ intervals });
+    const valid = VALID_CREATE_ARGS.cycling(LATER);
+    const { reply } = await session.call("create_cycling_workout", {
+      ...valid,
+      steps: [
+        {
+          type: "steady",
+          duration: { value: 20, unit: "minutes" },
+          power: { kind: "percent_ftp", value: 70 },
+          label: "HR check",
+        },
+      ],
+    });
+    expect(reply).toMatchObject({ status: "refused", code: "invalid_workout", saved: "no" });
+    expect(reply["details"]).toMatch(/^steps\[0\]\.label: /);
+    expect(intervals.requests).toEqual([]);
+  });
+
   it("sends a Ride with the serialized description and its moving time", async () => {
     const intervals = fakeIntervals();
     await (

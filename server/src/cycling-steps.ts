@@ -67,7 +67,9 @@ export const cyclingStepsField = z
     "Ordered steps. A step is warmup/steady/interval/ramp/recovery/rest/cooldown/freeride, or a set " +
       "{type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: " +
       "{kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. Ramps need low and high. " +
-      "Every step except freeride and rest needs a power target.",
+      "Every step except freeride and rest needs a power target. A label is a short cue in plain words, " +
+      "with no digits and none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, " +
+      "rpm, w, watts, km, mi, mtr, press lap).",
   );
 
 export type CyclingSteps = z.output<typeof cyclingStepsField>;
@@ -205,6 +207,16 @@ function parseCadence(cadence: CadenceTarget, path: string): Parsed<ParsedCadenc
     : { value: { shape: "single", rpm: target }, issues: [] };
 }
 
+const WORKOUT_TEXT_TOKEN =
+  /\d|<!>|(?<!\p{L})(?:hr|lthr|pace|mmp|ramp|freeride|rpm|w|watts|km|mi|mtr|press\s+lap)(?!\p{L})/iu;
+
+function labelIssue(label: string | undefined, path: string): string | undefined {
+  const token = label === undefined ? null : WORKOUT_TEXT_TOKEN.exec(label);
+  return token === null
+    ? undefined
+    : `${path}.label: ${JSON.stringify(label)} contains ${JSON.stringify(token[0])}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`;
+}
+
 function parseSimpleStep(step: SimpleStep, path: string): Parsed<ParsedSimpleStep> {
   const issues: string[] = [];
   let power: ParsedPower | undefined;
@@ -222,6 +234,8 @@ function parseSimpleStep(step: SimpleStep, path: string): Parsed<ParsedSimpleSte
     issues.push(...parsed.issues);
     cadence = parsed.value;
   }
+  const label = labelIssue(step.label, path);
+  if (label !== undefined) issues.push(label);
   return {
     value: { type: step.type, duration: step.duration, power, cadence, label: step.label },
     issues,

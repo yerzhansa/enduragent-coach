@@ -43541,7 +43541,7 @@ var setStepSchema = external_exports.object({
   recovery: simpleStepSchema
 }).strict();
 var cyclingStepsField = external_exports.array(external_exports.union([simpleStepSchema, setStepSchema])).min(1).max(40).describe(
-  "Ordered steps. A step is warmup/steady/interval/ramp/recovery/rest/cooldown/freeride, or a set {type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: {kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. Ramps need low and high. Every step except freeride and rest needs a power target."
+  "Ordered steps. A step is warmup/steady/interval/ramp/recovery/rest/cooldown/freeride, or a set {type:'set', repeat, interval, recovery}. Durations use seconds or minutes. Power targets: {kind:'percent_ftp'|'watts'|'zone', value} or {kind, low, high}. Ramps need low and high. Every step except freeride and rest needs a power target. A label is a short cue in plain words, with no digits and none of intervals.icu's workout keywords (HR, LTHR, pace, MMP, ramp, freeride, rpm, w, watts, km, mi, mtr, press lap)."
 );
 var ZONES = [1, 2, 3, 4, 5, 6, 7];
 var ZONE_MIDPOINT_PERCENT = {
@@ -43615,6 +43615,11 @@ function parseCadence(cadence, path) {
   }
   return target === void 0 ? { value: void 0, issues: [`${path}: cadence requires 'target' or 'low'+'high'`] } : { value: { shape: "single", rpm: target }, issues: [] };
 }
+var WORKOUT_TEXT_TOKEN = new RegExp("\\d|<!>|(?<!\\p{L})(?:hr|lthr|pace|mmp|ramp|freeride|rpm|w|watts|km|mi|mtr|press\\s+lap)(?!\\p{L})", "iu");
+function labelIssue(label, path) {
+  const token = label === void 0 ? null : WORKOUT_TEXT_TOKEN.exec(label);
+  return token === null ? void 0 : `${path}.label: ${JSON.stringify(label)} contains ${JSON.stringify(token[0])}, which intervals.icu reads as workout text. Use short words without numbers or target keywords`;
+}
 function parseSimpleStep(step, path) {
   const issues = [];
   let power;
@@ -43632,6 +43637,8 @@ function parseSimpleStep(step, path) {
     issues.push(...parsed.issues);
     cadence = parsed.value;
   }
+  const label = labelIssue(step.label, path);
+  if (label !== void 0) issues.push(label);
   return {
     value: { type: step.type, duration: step.duration, power, cadence, label: step.label },
     issues
