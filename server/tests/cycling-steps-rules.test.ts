@@ -70,7 +70,7 @@ describe("formatCyclingSteps rules", () => {
     ).toBe("steps[0]: power.low (90) > power.high (70)");
     expect(
       issues([
-        { type: "cooldown", duration: minutes(10), power: { kind: "watts", low: 200, high: 150 } },
+        { type: "warmup", duration: minutes(10), power: { kind: "watts", low: 200, high: 150 } },
       ]),
     ).toBe("steps[0]: power.low (200) > power.high (150)");
     expect(
@@ -78,6 +78,20 @@ describe("formatCyclingSteps rules", () => {
         { type: "interval", duration: minutes(5), power: { kind: "zone", low: 5, high: 4 } },
       ]),
     ).toBe("steps[0]: power.low (5) > power.high (4)");
+  });
+
+  it("points a cooldown with low above high at a ramp instead of a swapped range", () => {
+    expect(
+      issues([
+        {
+          type: "cooldown",
+          duration: minutes(10),
+          power: { kind: "percent_ftp", low: 60, high: 40 },
+        },
+      ]),
+    ).toBe(
+      "steps[0]: power.low (60) > power.high (40). A cooldown range is one steady target, so for a ramp down from 60 to 40 use type 'ramp' with low 60 and high 40",
+    );
   });
 
   it("rejects percent_ftp above 200 and watts above 1500 as beyond the sanity bound", () => {
