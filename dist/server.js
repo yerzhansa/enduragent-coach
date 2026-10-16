@@ -43192,17 +43192,37 @@ function parseStoredWorkout(raw) {
     hasStructuredSteps,
     chartWillRender: type === "Ride" ? hasStructuredSteps : null,
     externalId,
-    isPluginWorkout: (event.tags ?? []).includes(PROVENANCE_TAG) || (externalId?.startsWith(`${PROVENANCE_TAG}:`) ?? false)
+    isPluginWorkout: isPluginEvent(event.tags ?? [], externalId)
   };
 }
-function parseStoredWorkouts(raw) {
+function isPluginEvent(tags, externalId) {
+  return tags.includes(PROVENANCE_TAG) || (externalId?.startsWith(`${PROVENANCE_TAG}:`) ?? false);
+}
+var dayEntrySchema = external_exports.object({
+  id: external_exports.number().nullable().catch(null),
+  name: external_exports.string().nullable().catch(null),
+  type: external_exports.string().nullable().catch(null),
+  externalId: external_exports.string().nullable().catch(null),
+  tags: external_exports.array(external_exports.unknown()).nullable().catch(null)
+});
+function parseDayListing(raw) {
   const workouts = [];
+  const takenExternalIds = /* @__PURE__ */ new Set();
   for (const entry of raw) {
-    const workout = parseStoredWorkout(entry);
-    if (workout === void 0) return void 0;
-    workouts.push(workout);
+    const parsed = dayEntrySchema.safeParse(entry);
+    if (!parsed.success) continue;
+    const { id, name, type, externalId, tags } = parsed.data;
+    if (externalId !== null) takenExternalIds.add(externalId);
+    if (id === null || !isEventId(id)) continue;
+    workouts.push({
+      eventId: id,
+      name,
+      type,
+      externalId,
+      isPluginWorkout: isPluginEvent(tags ?? [], externalId)
+    });
   }
-  return workouts;
+  return { workouts, takenExternalIds };
 }
 var UNAUTHORIZED_DETAILS = "intervals.icu answered 401 Unauthorized.";
 var FORBIDDEN_DETAILS = "intervals.icu answered 403 Forbidden.";
@@ -43415,20 +43435,12 @@ async function saveOnDay(intervals, now, planned) {
     return refusal("past_date_refused", `${day} is before today (${today} in ${zone}).`);
   }
   if (!listed.ok) return dayReadFailure(listed.error);
-  const workouts = parseStoredWorkouts(listed.value);
-  if (workouts === void 0) {
-    return refusal("intervals_unavailable", "The day's workouts came back in an unexpected shape.");
-  }
-  const [first, ...others] = workouts.filter((workout) => isSameWorkoutName(name, workout.name)).map(toDayWorkout);
+  const { workouts, takenExternalIds } = parseDayListing(listed.value);
+  const [first, ...others] = workouts.filter((workout) => isSameWorkoutName(name, workout.name));
   if (first !== void 0 && !planned.confirmDuplicate) {
     return { status: "duplicate_found", tool, date: day, name, existing: [first, ...others] };
   }
-  const externalId = allocateExternalId(
-    baseExternalId(planned.sport, day, name),
-    new Set(
-      workouts.flatMap((workout) => workout.externalId === null ? [] : [workout.externalId])
-    )
-  );
+  const externalId = allocateExternalId(baseExternalId(planned.sport, day, name), takenExternalIds);
   const event = toNewWorkoutEvent(planned.eventType, day, name, planned.body, externalId);
   const written = await attempt(() => intervals.events.create(event));
   const created = { tool, date: day, name, externalId };
@@ -43453,7 +43465,7 @@ async function saveOnDay(intervals, now, planned) {
 async function recover(intervals, attempted, uncertain) {
   const listed = await attempt(() => intervals.events.list(dayQuery(attempted.date)));
   if (!listed.ok) return uncertain;
-  const matches = (parseStoredWorkouts(listed.value) ?? []).filter(
+  const matches = parseDayListing(listed.value).workouts.filter(
     (workout) => workout.externalId === attempted.externalId
   );
   const [match, ...extra] = matches;
@@ -43489,15 +43501,6 @@ function toNewWorkoutEvent(eventType, day, name, body, externalId) {
     movingTime: Math.round(body.movingTimeSeconds),
     tags: [PROVENANCE_TAG],
     externalId
-  };
-}
-function toDayWorkout(stored) {
-  return {
-    eventId: stored.eventId,
-    name: stored.name,
-    type: stored.type,
-    externalId: stored.externalId,
-    isPluginWorkout: stored.isPluginWorkout
   };
 }
 

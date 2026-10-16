@@ -1,6 +1,6 @@
 import { IntervalsClient, type ApiError, type Result } from "intervals-icu-api";
 import { z } from "zod";
-import { refusal, type Refusal, type RefusalOf } from "./tool-contract.js";
+import { refusal, type DayWorkout, type Refusal, type RefusalOf } from "./tool-contract.js";
 
 declare const apiKeyBrand: unique symbol;
 declare const calendarDayBrand: unique symbol;
@@ -192,20 +192,45 @@ export function parseStoredWorkout(raw: unknown): StoredWorkout | undefined {
     hasStructuredSteps,
     chartWillRender: type === "Ride" ? hasStructuredSteps : null,
     externalId,
-    isPluginWorkout:
-      (event.tags ?? []).includes(PROVENANCE_TAG) ||
-      (externalId?.startsWith(`${PROVENANCE_TAG}:`) ?? false),
+    isPluginWorkout: isPluginEvent(event.tags ?? [], externalId),
   };
 }
 
-export function parseStoredWorkouts(raw: readonly unknown[]): readonly StoredWorkout[] | undefined {
-  const workouts: StoredWorkout[] = [];
+function isPluginEvent(tags: readonly unknown[], externalId: string | null): boolean {
+  return tags.includes(PROVENANCE_TAG) || (externalId?.startsWith(`${PROVENANCE_TAG}:`) ?? false);
+}
+
+const dayEntrySchema = z.object({
+  id: z.number().nullable().catch(null),
+  name: z.string().nullable().catch(null),
+  type: z.string().nullable().catch(null),
+  externalId: z.string().nullable().catch(null),
+  tags: z.array(z.unknown()).nullable().catch(null),
+});
+
+export interface DayListing {
+  readonly workouts: readonly DayWorkout[];
+  readonly takenExternalIds: ReadonlySet<string>;
+}
+
+export function parseDayListing(raw: readonly unknown[]): DayListing {
+  const workouts: DayWorkout[] = [];
+  const takenExternalIds = new Set<string>();
   for (const entry of raw) {
-    const workout = parseStoredWorkout(entry);
-    if (workout === undefined) return undefined;
-    workouts.push(workout);
+    const parsed = dayEntrySchema.safeParse(entry);
+    if (!parsed.success) continue;
+    const { id, name, type, externalId, tags } = parsed.data;
+    if (externalId !== null) takenExternalIds.add(externalId);
+    if (id === null || !isEventId(id)) continue;
+    workouts.push({
+      eventId: id,
+      name,
+      type,
+      externalId,
+      isPluginWorkout: isPluginEvent(tags ?? [], externalId),
+    });
   }
-  return workouts;
+  return { workouts, takenExternalIds };
 }
 
 const UNAUTHORIZED_DETAILS = "intervals.icu answered 401 Unauthorized.";

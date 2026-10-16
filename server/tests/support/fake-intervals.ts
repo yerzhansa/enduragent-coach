@@ -21,6 +21,7 @@ export type CreateFailure =
 export interface FakeCalendarSetup {
   readonly timezone?: string | null;
   readonly events?: readonly FakeEvent[];
+  readonly oddDayEntries?: readonly unknown[];
   readonly athleteError?: ApiError;
   readonly listError?: ApiError;
   readonly recoveryListError?: ApiError;
@@ -71,8 +72,8 @@ export function fakeIntervals(setup: FakeCalendarSetup = {}): FakeIntervals {
         lists += 1;
         const error = [setup.listError, setup.recoveryListError][lists - 1];
         if (error !== undefined) return fail(error);
-        return ok(
-          calendar.filter((event) => {
+        return ok([
+          ...calendar.filter((event) => {
             const day = event.startDateLocal.slice(0, 10);
             return (
               day >= query.oldest &&
@@ -80,7 +81,8 @@ export function fakeIntervals(setup: FakeCalendarSetup = {}): FakeIntervals {
               query.category.some((category) => category === event.category)
             );
           }),
-        );
+          ...(setup.oddDayEntries ?? []),
+        ]);
       },
       get: async (eventId) => {
         requests.push("events.get");

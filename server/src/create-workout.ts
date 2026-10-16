@@ -6,14 +6,13 @@ import {
   dayQuery,
   dayReadFailure,
   parseCalendarDay,
+  parseDayListing,
   parseEventId,
-  parseStoredWorkouts,
   todayIn,
   writeFailure,
   type CalendarDay,
   type IntervalsPort,
   type NewWorkoutEvent,
-  type StoredWorkout,
   type WorkoutEventType,
 } from "./calendar.js";
 import { keyedLock } from "./keyed-lock.js";
@@ -23,7 +22,6 @@ import {
   type CoachDeps,
   type CoachTool,
   type CreateReply,
-  type DayWorkout,
 } from "./tool-contract.js";
 
 export type Checked<T> =
@@ -164,24 +162,14 @@ async function saveOnDay(
     return refusal("past_date_refused", `${day} is before today (${today} in ${zone}).`);
   }
   if (!listed.ok) return dayReadFailure(listed.error);
-  const workouts = parseStoredWorkouts(listed.value);
-  if (workouts === undefined) {
-    return refusal("intervals_unavailable", "The day's workouts came back in an unexpected shape.");
-  }
+  const { workouts, takenExternalIds } = parseDayListing(listed.value);
 
-  const [first, ...others] = workouts
-    .filter((workout) => isSameWorkoutName(name, workout.name))
-    .map(toDayWorkout);
+  const [first, ...others] = workouts.filter((workout) => isSameWorkoutName(name, workout.name));
   if (first !== undefined && !planned.confirmDuplicate) {
     return { status: "duplicate_found", tool, date: day, name, existing: [first, ...others] };
   }
 
-  const externalId = allocateExternalId(
-    baseExternalId(planned.sport, day, name),
-    new Set(
-      workouts.flatMap((workout) => (workout.externalId === null ? [] : [workout.externalId])),
-    ),
-  );
+  const externalId = allocateExternalId(baseExternalId(planned.sport, day, name), takenExternalIds);
   const event = toNewWorkoutEvent(planned.eventType, day, name, planned.body, externalId);
   const written = await attempt(() => intervals.events.create(event));
   const created = { tool, date: day, name, externalId };
@@ -220,7 +208,7 @@ async function recover(
 ): Promise<CreateReply> {
   const listed = await attempt(() => intervals.events.list(dayQuery(attempted.date)));
   if (!listed.ok) return uncertain;
-  const matches = (parseStoredWorkouts(listed.value) ?? []).filter(
+  const matches = parseDayListing(listed.value).workouts.filter(
     (workout) => workout.externalId === attempted.externalId,
   );
   const [match, ...extra] = matches;
@@ -276,15 +264,5 @@ function toNewWorkoutEvent(
     movingTime: Math.round(body.movingTimeSeconds),
     tags: [PROVENANCE_TAG],
     externalId,
-  };
-}
-
-function toDayWorkout(stored: StoredWorkout): DayWorkout {
-  return {
-    eventId: stored.eventId,
-    name: stored.name,
-    type: stored.type,
-    externalId: stored.externalId,
-    isPluginWorkout: stored.isPluginWorkout,
   };
 }
