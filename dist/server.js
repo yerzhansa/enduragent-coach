@@ -43824,8 +43824,26 @@ function createCoachServer(options) {
   return server;
 }
 function checkedByTheTool(schema) {
-  return { "~standard": { ...schema["~standard"], validate: (value) => ({ value }) } };
+  const standard = schema["~standard"];
+  return {
+    "~standard": {
+      ...standard,
+      validate: (value) => ({ value }),
+      jsonSchema: {
+        ...standard.jsonSchema,
+        input: (options) => standard.jsonSchema.input({
+          ...options,
+          libraryOptions: { override: discriminatedUnionAsAnyOf }
+        })
+      }
+    }
+  };
 }
+var discriminatedUnionAsAnyOf = ({ zodSchema, jsonSchema }) => {
+  if (!(zodSchema instanceof external_exports.ZodDiscriminatedUnion) || jsonSchema.oneOf === void 0) return;
+  jsonSchema.anyOf = jsonSchema.oneOf;
+  delete jsonSchema.oneOf;
+};
 function toCallToolResult(reply) {
   return {
     content: [{ type: "text", text: reply.text }],

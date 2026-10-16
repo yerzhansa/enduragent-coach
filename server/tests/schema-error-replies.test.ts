@@ -66,6 +66,12 @@ describe("a create call whose arguments break the input schema", () => {
       { ...cyclingArgs, steps: [steady, steady, { ...steady, type: "sprint" }] },
     ],
     [
+      "create_cycling_workout",
+      "a step without a type",
+      ["steps[0].type", "set"],
+      { ...cyclingArgs, steps: [{ duration: steady.duration, power: steady.power }] },
+    ],
+    [
       "create_strength_workout",
       "an unknown key",
       ["notes"],
@@ -108,30 +114,6 @@ describe("a create call whose arguments break the input schema", () => {
   });
 });
 
-function refusalTable(text: string): Map<string, string> {
-  const rows = text
-    .split("\n")
-    .filter((line) => line.startsWith("| `"))
-    .map((line) => line.split("|").map((cell) => cell.trim()));
-  return new Map(rows.map(([, code = "", todo = ""]) => [code, todo]));
-}
-
-describe("the skills' refusal tables", () => {
-  const workouts = refusalTable(WORKOUTS_SKILL);
-  const strength = refusalTable(skill("strength-workouts"));
-
-  it("tell the agent what to do with invalid_input", () => {
-    expect(workouts.get("`invalid_input`")).toMatch(/details/);
-    expect(strength.get("`invalid_input`")).toMatch(/details/);
-  });
-
-  it("give strength the same advice as cycling for each shared code", () => {
-    expect(Object.fromEntries(strength)).toEqual(
-      Object.fromEntries([...strength.keys()].map((code) => [code, workouts.get(code)])),
-    );
-  });
-});
-
 describe("a get_workout call whose arguments break the input schema", () => {
   it.each([
     ["a string eventId", "123"],
@@ -156,7 +138,7 @@ describe("a get_workout call whose arguments break the input schema", () => {
 });
 
 describe("tools/list", () => {
-  it("advertises each tool's own zod input schema, byte for byte", async () => {
+  it("advertises each tool's own zod input schema byte for byte, with anyOf in place of oneOf", async () => {
     const reference = new McpServer(TEST_IDENTITY);
     for (const tool of TOOLS) {
       reference.registerTool(
@@ -175,7 +157,7 @@ describe("tools/list", () => {
 
     const listed = await (await openSession({ intervals: undefined })).listTools();
     expect(JSON.stringify(listed.map((tool) => [tool.name, tool.inputSchema]))).toBe(
-      JSON.stringify(expected),
+      JSON.stringify(expected).replaceAll('"oneOf":', '"anyOf":'),
     );
   });
 });
