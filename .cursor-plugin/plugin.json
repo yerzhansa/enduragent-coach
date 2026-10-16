@@ -1,7 +1,7 @@
 {
   "name": "enduragent-coach",
   "displayName": "Enduragent Coach",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cycling and strength workouts on your intervals.icu calendar: checked before saving, dated in your time zone, read back after. Works with intervals.icu.",
   "author": { "name": "Yerzhan Sagyt" },
   "homepage": "https://enduragent.icu",
