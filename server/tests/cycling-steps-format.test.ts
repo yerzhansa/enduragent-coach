@@ -196,11 +196,23 @@ describe("formatCyclingSteps description", () => {
     expect(description).toBe("Main set\n- 30s 150%\n- 1m30 120%");
   });
 
-  it("writes a duration-only line with its label for a freeride without power", () => {
+  it("writes the freeride keyword after the duration so the step runs with ERG off", () => {
     const { description } = formatted([
       { type: "freeride", duration: { value: 60, unit: "minutes" }, label: "Keep it easy" },
     ]);
-    expect(description).toBe("Main set\n- 60m Keep it easy");
+    expect(description).toBe("Main set\n- 60m freeride Keep it easy");
+  });
+
+  it("keeps a freeride power target and cadence after the freeride keyword", () => {
+    const { description } = formatted([
+      {
+        type: "freeride",
+        duration: { value: 20, unit: "minutes" },
+        power: { kind: "zone", value: 2 },
+        cadence: { target: 90 },
+      },
+    ]);
+    expect(description).toBe("Main set\n- 20m freeride Z2 90rpm");
   });
 
   it("does not repeat the section header for consecutive steps of the same section", () => {
